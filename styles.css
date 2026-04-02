@@ -352,6 +352,8 @@ input[type="text"][inputmode="numeric"] {
   grid-area: sports;
   overflow: hidden;
   gap: 0.32rem;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
 }
 
 .sports-card .card-header {
@@ -370,16 +372,14 @@ input[type="text"][inputmode="numeric"] {
 }
 
 .sports-toolbar {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
-  grid-template-areas: "select custom button";
+  display: flex;
   align-items: center;
   gap: 0.32rem;
   padding: 0.08rem 0;
 }
 
 .sports-add-field {
-  grid-area: select;
+  flex: 1 1 0;
   min-width: 0;
   gap: 0;
 }
@@ -389,7 +389,7 @@ input[type="text"][inputmode="numeric"] {
 }
 
 .sports-custom-field {
-  grid-area: custom;
+  flex: 1 1 0;
   min-width: 0;
   gap: 0;
 }
@@ -405,7 +405,7 @@ input[type="text"][inputmode="numeric"] {
 }
 
 .sports-toolbar .secondary-button {
-  grid-area: button;
+  flex: 0 0 auto;
   min-height: 34px;
   padding: 0.42rem 0.7rem;
   border-radius: 14px;
@@ -476,14 +476,17 @@ input[type="text"][inputmode="numeric"] {
 
 .players-current {
   display: grid;
+  grid-template-rows: auto minmax(74px, 1fr);
   gap: 0.32rem;
+  min-width: 0;
 }
 
 .large-number-display {
-  display: grid;
-  place-items: center;
-  min-height: 84px;
-  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 74px;
   border-radius: 18px;
   border: 1px solid rgba(21, 37, 58, 0.1);
   background:
@@ -1196,11 +1199,8 @@ input[type="text"][inputmode="numeric"] {
   }
 
   .sports-toolbar {
+    display: grid;
     grid-template-columns: 1fr;
-    grid-template-areas:
-      "select"
-      "custom"
-      "button";
   }
 
   .players-layout {
@@ -1224,5 +1224,252 @@ input[type="text"][inputmode="numeric"] {
     width: calc(100vw - 1rem);
     height: calc(100dvh - 1rem);
     border-radius: 22px;
+  }
+}
+
+@media (max-width: 1100px) and (min-width: 701px) {
+  body {
+    overflow: auto;
+  }
+
+  .app-shell {
+    height: auto;
+    min-height: 100dvh;
+    padding: 0.55rem;
+    gap: 0.45rem;
+  }
+
+  .app-header {
+    gap: 0.45rem;
+  }
+
+  .app-header h1 {
+    margin-top: 0.08rem;
+    font-size: 1.82rem;
+  }
+
+  .subtitle {
+    margin-top: 0.2rem;
+    font-size: 0.82rem;
+    line-height: 1.22;
+  }
+
+  .app-grid {
+    grid-template-columns: minmax(0, 1.08fr) minmax(290px, 0.92fr);
+    grid-template-rows: minmax(0, 0.78fr) minmax(0, 0.92fr) minmax(250px, 1.3fr);
+    gap: 0.45rem;
+  }
+
+  .card {
+    padding: 0.58rem;
+    gap: 0.42rem;
+    border-radius: 18px;
+  }
+
+  .hero-card__content {
+    gap: 0.65rem;
+  }
+
+  .hero-value {
+    font-size: clamp(1.7rem, 3vw, 2.5rem);
+  }
+
+  .hero-sidebar {
+    min-width: 190px;
+    gap: 0.48rem;
+  }
+
+  .hero-stats {
+    gap: 0.32rem;
+  }
+
+  .hero-stat {
+    padding: 0.34rem 0.48rem;
+  }
+
+  .hero-stat span {
+    font-size: 0.62rem;
+  }
+
+  .hero-stat strong {
+    font-size: 0.9rem;
+  }
+
+  .hero-pick-button {
+    min-height: 46px;
+    padding: 0.6rem 0.82rem;
+    font-size: 0.96rem;
+    border-radius: 16px;
+  }
+
+  .sports-card {
+    gap: 0.26rem;
+  }
+
+  .sports-card .card-header {
+    gap: 0.35rem;
+  }
+
+  .sports-card .card-header h2 {
+    font-size: 0.94rem;
+  }
+
+  .sports-card .label {
+    font-size: 0.68rem;
+  }
+
+  .sports-toolbar {
+    gap: 0.26rem;
+    padding: 0;
+  }
+
+  .sports-select,
+  .sports-text-input {
+    min-height: 32px;
+    padding: 0.38rem 0.58rem;
+    font-size: 0.86rem;
+  }
+
+  .sports-toolbar .secondary-button,
+  .sports-card .ghost-button {
+    min-height: 32px;
+    padding: 0.38rem 0.62rem;
+    font-size: 0.84rem;
+  }
+
+  .sports-grid {
+    grid-auto-rows: minmax(60px, 68px);
+    gap: 0.28rem;
+  }
+
+  .sport-tile__select {
+    padding: 0.28rem;
+  }
+
+  .sport-tile__status {
+    padding: 0.14rem 0.28rem;
+    font-size: 0.54rem;
+  }
+
+  .sport-tile__name {
+    font-size: 0.7rem;
+  }
+
+  .sport-tile__remove {
+    top: 0.24rem;
+    left: 0.24rem;
+    width: 20px;
+    height: 20px;
+    font-size: 0.66rem;
+  }
+
+  .sport-toggle-switch {
+    top: 0.24rem;
+    right: 0.24rem;
+    width: 34px;
+    height: 20px;
+  }
+
+  .sport-toggle-switch span::after {
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+  }
+
+  .sport-toggle-switch input:checked + span::after {
+    transform: translateX(14px);
+  }
+
+  .players-layout {
+    grid-template-columns: minmax(0, 0.78fr) minmax(0, 1.22fr);
+    gap: 0.34rem;
+  }
+
+  .large-number-display {
+    min-height: 62px;
+    font-size: clamp(1.2rem, 2vw, 1.65rem);
+  }
+
+  .players-range-panel {
+    padding: 0.45rem;
+  }
+
+  .timer-card {
+    gap: 0.42rem;
+  }
+
+  .timer-card .card-header h2,
+  .teams-card .card-header h2 {
+    font-size: 0.94rem;
+  }
+
+  .timer-display {
+    min-height: 56px;
+    border-radius: 18px;
+    font-size: clamp(1.7rem, 3vw, 2.35rem);
+  }
+
+  .timer-range-grid {
+    gap: 0.32rem;
+  }
+
+  .timer-range-grid .field {
+    font-size: 0.76rem;
+  }
+
+  .teams-card {
+    min-height: 250px;
+    overflow: hidden;
+    gap: 0.36rem;
+  }
+
+  .teams-card .card-header {
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .teams-toolbar {
+    gap: 0.35rem;
+  }
+
+  .compact-field {
+    max-width: 164px;
+  }
+
+  .teams-container {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.42rem;
+  }
+
+  .team-card {
+    padding: 0.5rem;
+    gap: 0.34rem;
+    border-radius: 16px;
+  }
+
+  .team-card__header {
+    gap: 0.42rem;
+  }
+
+  .team-card__title {
+    gap: 0.36rem;
+  }
+
+  .team-card__title strong {
+    font-size: 0.95rem;
+  }
+
+  .team-score {
+    font-size: 1.45rem;
+  }
+
+  .team-actions {
+    gap: 0.32rem;
+  }
+
+  .team-actions button {
+    padding: 0.4rem 0.3rem;
+    font-size: 0.82rem;
   }
 }
