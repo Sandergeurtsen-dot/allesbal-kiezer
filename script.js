@@ -83,6 +83,7 @@ const sportsList = document.querySelector("#sportsList");
 const toggleAllSportsButton = document.querySelector("#toggleAllSportsButton");
 
 const playersCard = document.querySelector(".players-card");
+const currentPlayersStepper = document.querySelector("#currentPlayersStepper");
 const currentPlayersInput = document.querySelector("#currentPlayersInput");
 const currentPlayersLabel = document.querySelector("#currentPlayersLabel");
 const allPlayersBadge = document.querySelector("#allPlayersBadge");
@@ -183,6 +184,7 @@ function loadState() {
 function attachEvents() {
   document.addEventListener("pointerdown", primeAudioContext, { passive: true });
   document.addEventListener("keydown", primeAudioContext);
+  document.addEventListener("click", handleStepperButtonClick);
 
   pickSportButton.addEventListener("click", pickRandomSport);
   toggleAllSportsButton.addEventListener("click", toggleAllSports);
@@ -191,11 +193,12 @@ function attachEvents() {
   sportsList.addEventListener("change", handleSportToggleChange);
 
   randomPlayersButton.addEventListener("click", randomizePlayers);
-  currentPlayersInput.addEventListener("input", handlePlayerInputs);
-  minPlayersInput.addEventListener("input", handlePlayerInputs);
-  maxPlayersInput.addEventListener("input", handlePlayerInputs);
+  attachNumericFieldEvents(
+    [currentPlayersInput, minPlayersInput, maxPlayersInput],
+    handlePlayerInputs
+  );
 
-  teamCountInput.addEventListener("input", handleTeamCountChange);
+  attachNumericFieldEvents([teamCountInput], handleTeamCountChange);
   teamsContainer.addEventListener("change", handleTeamFieldChange);
   teamsContainer.addEventListener("click", handleTeamScoreAction);
   resetScoresButton.addEventListener("click", resetScores);
@@ -204,8 +207,7 @@ function attachEvents() {
   openGameModeButton.addEventListener("click", openGameMode);
   startPauseTimerButton.addEventListener("click", handleMainTimerToggle);
   resetTimerButton.addEventListener("click", resetTimer);
-  timerMinutesInput.addEventListener("input", handleTimerInput);
-  timerSecondsInput.addEventListener("input", handleTimerInput);
+  attachNumericFieldEvents([timerMinutesInput, timerSecondsInput], handleTimerInput);
 
   gameOverlayBackdrop.addEventListener("click", closeGameMode);
   closeGameModeButton.addEventListener("click", closeGameMode);
@@ -220,6 +222,16 @@ function attachEvents() {
     if (event.key === "Escape" && isGameModeOpen) {
       closeGameMode();
     }
+  });
+}
+
+function attachNumericFieldEvents(inputs, commitHandler) {
+  inputs.forEach((input) => {
+    input.addEventListener("input", sanitizeNumericTextInput);
+    input.addEventListener("change", commitHandler);
+    input.addEventListener("blur", commitHandler);
+    input.addEventListener("focus", selectNumericInputContent);
+    input.addEventListener("keydown", handleNumericInputKeydown);
   });
 }
 
@@ -302,7 +314,7 @@ function renderPlayers() {
 
   currentPlayersInput.value = state.players.current;
   currentPlayersInput.disabled = trefbalActive;
-  currentPlayersInput.hidden = trefbalActive;
+  currentPlayersStepper.hidden = trefbalActive;
   allPlayersBadge.hidden = !trefbalActive;
   minPlayersInput.value = state.players.min;
   maxPlayersInput.value = state.players.max;
@@ -457,6 +469,116 @@ function handleSportToggleChange(event) {
 
   sport.enabled = target.checked;
   render();
+}
+
+function sanitizeNumericTextInput(event) {
+  const target = event.target;
+  if (!(target instanceof HTMLInputElement)) {
+    return;
+  }
+
+  const digitsOnly = target.value.replace(/[^\d]/g, "");
+  if (digitsOnly !== target.value) {
+    target.value = digitsOnly;
+  }
+}
+
+function selectNumericInputContent(event) {
+  const target = event.target;
+  if (!(target instanceof HTMLInputElement)) {
+    return;
+  }
+
+  requestAnimationFrame(() => {
+    target.select();
+  });
+}
+
+function handleNumericInputKeydown(event) {
+  if (event.key !== "Enter") {
+    return;
+  }
+
+  const target = event.target;
+  if (!(target instanceof HTMLInputElement)) {
+    return;
+  }
+
+  event.preventDefault();
+  target.blur();
+}
+
+function handleStepperButtonClick(event) {
+  const target = event.target;
+  if (!(target instanceof Element)) {
+    return;
+  }
+
+  const button = target.closest("button[data-step-target]");
+  if (!(button instanceof HTMLButtonElement)) {
+    return;
+  }
+
+  const targetId = button.dataset.stepTarget;
+  const direction = button.dataset.stepDirection === "down" ? -1 : 1;
+
+  if (!targetId) {
+    return;
+  }
+
+  adjustStepperValue(targetId, direction);
+}
+
+function adjustStepperValue(targetId, delta) {
+  if (targetId === "currentPlayersInput") {
+    if (isTrefbalSelected()) {
+      return;
+    }
+
+    state.players.current = normalizeNumber(
+      state.players.current + delta,
+      state.players.min,
+      state.players.max,
+      state.players.min
+    );
+    render();
+    return;
+  }
+
+  if (targetId === "minPlayersInput") {
+    state.players.min = normalizeNumber(state.players.min + delta, 1, 99, 6);
+    render();
+    return;
+  }
+
+  if (targetId === "maxPlayersInput") {
+    state.players.max = normalizeNumber(state.players.max + delta, 1, 99, 14);
+    render();
+    return;
+  }
+
+  if (targetId === "teamCountInput") {
+    teamCountInput.value = normalizeNumber(state.teams.length + delta, 1, 8, state.teams.length);
+    handleTeamCountChange();
+    return;
+  }
+
+  if (targetId === "timerMinutesInput") {
+    state.timer.minutes = normalizeNumber(state.timer.minutes + delta, 0, 99, 5);
+    if (!state.timer.isRunning) {
+      state.timer.remainingSeconds = state.timer.minutes * 60 + state.timer.seconds;
+    }
+    render();
+    return;
+  }
+
+  if (targetId === "timerSecondsInput") {
+    state.timer.seconds = normalizeNumber(state.timer.seconds + delta, 0, 59, 0);
+    if (!state.timer.isRunning) {
+      state.timer.remainingSeconds = state.timer.minutes * 60 + state.timer.seconds;
+    }
+    render();
+  }
 }
 
 function pickRandomSport() {

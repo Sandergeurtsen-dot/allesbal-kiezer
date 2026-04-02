@@ -78,14 +78,36 @@
               <label id="currentPlayersLabel" class="label" for="currentPlayersInput">
                 Gekozen aantal
               </label>
-              <input
-                id="currentPlayersInput"
-                class="large-number-input"
-                type="number"
-                min="1"
-                max="99"
-                value="10"
-              />
+              <div id="currentPlayersStepper" class="number-stepper number-stepper--large">
+                <button
+                  class="stepper-button"
+                  type="button"
+                  data-step-target="currentPlayersInput"
+                  data-step-direction="down"
+                  aria-label="1 speler minder"
+                >
+                  -
+                </button>
+                <input
+                  id="currentPlayersInput"
+                  class="large-number-input stepper-input"
+                  type="text"
+                  inputmode="numeric"
+                  pattern="[0-9]*"
+                  value="10"
+                  autocomplete="off"
+                  enterkeyhint="done"
+                />
+                <button
+                  class="stepper-button"
+                  type="button"
+                  data-step-target="currentPlayersInput"
+                  data-step-direction="up"
+                  aria-label="1 speler meer"
+                >
+                  +
+                </button>
+              </div>
               <div id="allPlayersBadge" class="all-players-badge" hidden>
                 <strong>Iedereen doet mee</strong>
               </div>
@@ -96,25 +118,69 @@
               <div class="player-range-grid">
                 <label class="field">
                   <span>Minimum</span>
-                  <input
-                    id="minPlayersInput"
-                    class="range-number-input"
-                    type="number"
-                    min="1"
-                    max="99"
-                    value="6"
-                  />
+                  <div class="number-stepper">
+                    <button
+                      class="stepper-button"
+                      type="button"
+                      data-step-target="minPlayersInput"
+                      data-step-direction="down"
+                      aria-label="Minimum 1 lager"
+                    >
+                      -
+                    </button>
+                    <input
+                      id="minPlayersInput"
+                      class="range-number-input stepper-input"
+                      type="text"
+                      inputmode="numeric"
+                      pattern="[0-9]*"
+                      value="6"
+                      autocomplete="off"
+                      enterkeyhint="done"
+                    />
+                    <button
+                      class="stepper-button"
+                      type="button"
+                      data-step-target="minPlayersInput"
+                      data-step-direction="up"
+                      aria-label="Minimum 1 hoger"
+                    >
+                      +
+                    </button>
+                  </div>
                 </label>
                 <label class="field">
                   <span>Maximum</span>
-                  <input
-                    id="maxPlayersInput"
-                    class="range-number-input"
-                    type="number"
-                    min="1"
-                    max="99"
-                    value="14"
-                  />
+                  <div class="number-stepper">
+                    <button
+                      class="stepper-button"
+                      type="button"
+                      data-step-target="maxPlayersInput"
+                      data-step-direction="down"
+                      aria-label="Maximum 1 lager"
+                    >
+                      -
+                    </button>
+                    <input
+                      id="maxPlayersInput"
+                      class="range-number-input stepper-input"
+                      type="text"
+                      inputmode="numeric"
+                      pattern="[0-9]*"
+                      value="14"
+                      autocomplete="off"
+                      enterkeyhint="done"
+                    />
+                    <button
+                      class="stepper-button"
+                      type="button"
+                      data-step-target="maxPlayersInput"
+                      data-step-direction="up"
+                      aria-label="Maximum 1 hoger"
+                    >
+                      +
+                    </button>
+                  </div>
                 </label>
               </div>
             </div>
@@ -155,11 +221,69 @@
           <div class="range-grid timer-range-grid">
             <label class="field">
               <span>Minuten</span>
-              <input id="timerMinutesInput" type="number" min="0" max="99" value="5" />
+              <div class="number-stepper">
+                <button
+                  class="stepper-button"
+                  type="button"
+                  data-step-target="timerMinutesInput"
+                  data-step-direction="down"
+                  aria-label="1 minuut minder"
+                >
+                  -
+                </button>
+                <input
+                  id="timerMinutesInput"
+                  class="stepper-input"
+                  type="text"
+                  inputmode="numeric"
+                  pattern="[0-9]*"
+                  value="5"
+                  autocomplete="off"
+                  enterkeyhint="done"
+                />
+                <button
+                  class="stepper-button"
+                  type="button"
+                  data-step-target="timerMinutesInput"
+                  data-step-direction="up"
+                  aria-label="1 minuut meer"
+                >
+                  +
+                </button>
+              </div>
             </label>
             <label class="field">
               <span>Seconden</span>
-              <input id="timerSecondsInput" type="number" min="0" max="59" value="0" />
+              <div class="number-stepper">
+                <button
+                  class="stepper-button"
+                  type="button"
+                  data-step-target="timerSecondsInput"
+                  data-step-direction="down"
+                  aria-label="1 seconde minder"
+                >
+                  -
+                </button>
+                <input
+                  id="timerSecondsInput"
+                  class="stepper-input"
+                  type="text"
+                  inputmode="numeric"
+                  pattern="[0-9]*"
+                  value="0"
+                  autocomplete="off"
+                  enterkeyhint="done"
+                />
+                <button
+                  class="stepper-button"
+                  type="button"
+                  data-step-target="timerSecondsInput"
+                  data-step-direction="up"
+                  aria-label="1 seconde meer"
+                >
+                  +
+                </button>
+              </div>
             </label>
           </div>
 
@@ -182,7 +306,36 @@
             <div class="teams-toolbar">
               <label class="field compact-field">
                 <span>Aantal teams</span>
-                <input id="teamCountInput" type="number" min="1" max="8" value="2" />
+                <div class="number-stepper">
+                  <button
+                    class="stepper-button"
+                    type="button"
+                    data-step-target="teamCountInput"
+                    data-step-direction="down"
+                    aria-label="1 team minder"
+                  >
+                    -
+                  </button>
+                  <input
+                    id="teamCountInput"
+                    class="stepper-input"
+                    type="text"
+                    inputmode="numeric"
+                    pattern="[0-9]*"
+                    value="2"
+                    autocomplete="off"
+                    enterkeyhint="done"
+                  />
+                  <button
+                    class="stepper-button"
+                    type="button"
+                    data-step-target="teamCountInput"
+                    data-step-direction="up"
+                    aria-label="1 team meer"
+                  >
+                    +
+                  </button>
+                </div>
               </label>
               <button id="resetScoresButton" class="ghost-button" type="button">
                 Reset scores
