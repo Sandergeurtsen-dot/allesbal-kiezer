@@ -911,13 +911,14 @@ input[type="text"][inputmode="numeric"] {
   background:
     linear-gradient(135deg, rgba(14, 120, 255, 0.12), rgba(35, 165, 101, 0.12)),
     var(--panel-strong);
-  line-height: 1;
+  line-height: 0.92;
   text-align: center;
   color: #14314f;
-  font-size: clamp(1.42rem, 2.3vw, 1.95rem);
+  font-size: clamp(1.6rem, 2.6vw, 2.15rem);
   font-weight: 900;
+  font-variant-numeric: tabular-nums;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
-  letter-spacing: 0.03em;
+  letter-spacing: 0.01em;
 }
 
 .team-actions {
@@ -1638,7 +1639,7 @@ input[type="text"][inputmode="numeric"] {
     min-height: 2.5rem;
     padding: 0.18rem 0.34rem;
     border-radius: 11px;
-    font-size: 1.16rem;
+    font-size: 1.3rem;
   }
 
   .team-actions {
@@ -1706,7 +1707,7 @@ input[type="text"][inputmode="numeric"] {
     min-height: 2.3rem !important;
     padding: 0.14rem 0.32rem !important;
     border-radius: 10px !important;
-    font-size: 1.08rem !important;
+    font-size: 1.22rem !important;
   }
 
   .team-actions {
@@ -2050,7 +2051,7 @@ input[type="text"][inputmode="numeric"] {
     min-height: 1.95rem !important;
     padding: 0.1rem 0.24rem !important;
     border-radius: 9px !important;
-    font-size: 1rem !important;
+    font-size: 1.14rem !important;
   }
 
   .team-card .field {
