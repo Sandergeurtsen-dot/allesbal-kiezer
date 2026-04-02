@@ -55,8 +55,8 @@
                 </div>
               </div>
 
-              <button id="pickSportButton" class="primary-button" type="button">
-                Kies random sport
+              <button id="pickSportButton" class="primary-button hero-pick-button" type="button">
+                Kies sport
               </button>
             </div>
           </div>
@@ -75,39 +75,8 @@
 
           <div class="players-layout">
             <div class="players-current">
-              <label id="currentPlayersLabel" class="label" for="currentPlayersInput">
-                Gekozen aantal
-              </label>
-              <div id="currentPlayersStepper" class="number-stepper number-stepper--large">
-                <button
-                  class="stepper-button"
-                  type="button"
-                  data-step-target="currentPlayersInput"
-                  data-step-direction="down"
-                  aria-label="1 speler minder"
-                >
-                  -
-                </button>
-                <input
-                  id="currentPlayersInput"
-                  class="large-number-input stepper-input"
-                  type="text"
-                  inputmode="numeric"
-                  pattern="[0-9]*"
-                  value="10"
-                  autocomplete="off"
-                  enterkeyhint="done"
-                />
-                <button
-                  class="stepper-button"
-                  type="button"
-                  data-step-target="currentPlayersInput"
-                  data-step-direction="up"
-                  aria-label="1 speler meer"
-                >
-                  +
-                </button>
-              </div>
+              <p id="currentPlayersLabel" class="label">Gekozen aantal</p>
+              <div id="currentPlayersDisplay" class="large-number-display">10</div>
               <div id="allPlayersBadge" class="all-players-badge" hidden>
                 <strong>Iedereen doet mee</strong>
               </div>
@@ -195,6 +164,28 @@
             </div>
             <button id="toggleAllSportsButton" class="ghost-button" type="button">
               Alles uit
+            </button>
+          </div>
+          <div class="sports-toolbar">
+            <label class="field sports-add-field">
+              <select id="addSportSelect" class="sports-select">
+                <option value="">Extra sport</option>
+              </select>
+            </label>
+            <label class="field sports-custom-field">
+              <input
+                id="customSportInput"
+                class="sports-text-input"
+                type="text"
+                placeholder="Typ zelf een sport"
+                aria-label="Eigen sportnaam"
+                maxlength="28"
+                autocomplete="off"
+                enterkeyhint="done"
+              />
+            </label>
+            <button id="addSportButton" class="secondary-button" type="button">
+              Toevoegen
             </button>
           </div>
           <div id="sportsList" class="sports-grid"></div>
@@ -394,7 +385,7 @@
             Reset timer
           </button>
           <button id="overlayPickSportButton" class="ghost-button" type="button">
-            Nieuwe sport
+            Kies sport
           </button>
         </div>
       </section>

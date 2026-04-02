@@ -1,43 +1,92 @@
 const STORAGE_KEY = "allesbal-dashboard-state-v2";
 
-const DEFAULT_SPORTS = [
+const DEFAULT_SPORT_IDS = [
+  "voetbal",
+  "basketbal",
+  "frisbee",
+  "hockey",
+  "handbal",
+  "trefbal",
+];
+
+const SPORT_LIBRARY = [
   {
     id: "voetbal",
     name: "Voetbal",
-    enabled: true,
+    defaultEnabled: true,
     image: "./assets/sports/voetbal.svg",
   },
   {
     id: "basketbal",
     name: "Basketbal",
-    enabled: true,
+    defaultEnabled: true,
     image: "./assets/sports/basketbal.svg",
   },
   {
     id: "frisbee",
     name: "Frisbee",
-    enabled: true,
+    defaultEnabled: true,
     image: "./assets/sports/frisbee.svg",
   },
   {
     id: "hockey",
     name: "Hockey",
-    enabled: true,
+    defaultEnabled: true,
     image: "./assets/sports/hockey.svg",
   },
   {
     id: "handbal",
     name: "Handbal",
-    enabled: true,
+    defaultEnabled: true,
     image: "./assets/sports/handbal.svg",
   },
   {
     id: "trefbal",
     name: "Trefbal",
-    enabled: true,
+    defaultEnabled: true,
     image: "./assets/sports/trefbal.svg",
   },
+  {
+    id: "volleybal",
+    name: "Volleybal",
+    mark: "VB",
+    colors: ["#ff8a00", "#ff4d6d"],
+  },
+  {
+    id: "tennis",
+    name: "Tennis",
+    mark: "TN",
+    colors: ["#11b48c", "#0a7e7a"],
+  },
+  {
+    id: "badminton",
+    name: "Badminton",
+    mark: "BD",
+    colors: ["#7a4dff", "#3854d8"],
+  },
+  {
+    id: "korfbal",
+    name: "Korfbal",
+    mark: "KB",
+    colors: ["#ffb347", "#d96a1d"],
+  },
+  {
+    id: "rugby",
+    name: "Rugby",
+    mark: "RG",
+    colors: ["#d9485a", "#f28b2f"],
+  },
+  {
+    id: "tafeltennis",
+    name: "Tafeltennis",
+    mark: "TT",
+    colors: ["#00a6b8", "#0e78ff"],
+  },
 ];
+
+const DEFAULT_SPORTS = DEFAULT_SPORT_IDS.map((sportId) =>
+  buildSportFromDefinition(getSportDefinition(sportId))
+);
 
 const DEFAULT_TEAM_COLORS = [
   "#0e78ff",
@@ -70,6 +119,14 @@ const defaultState = {
   },
 };
 
+const FALLBACK_SPORT = {
+  id: "geen-sport",
+  name: "Sport",
+  enabled: false,
+  image: createSportArtwork("Sport", "SP", ["#4f76a7", "#294667"]),
+  removable: false,
+};
+
 const state = loadState();
 
 const heroCard = document.querySelector("#heroCard");
@@ -81,10 +138,12 @@ const heroTimerStat = document.querySelector("#heroTimerStat");
 const pickSportButton = document.querySelector("#pickSportButton");
 const sportsList = document.querySelector("#sportsList");
 const toggleAllSportsButton = document.querySelector("#toggleAllSportsButton");
+const addSportSelect = document.querySelector("#addSportSelect");
+const customSportInput = document.querySelector("#customSportInput");
+const addSportButton = document.querySelector("#addSportButton");
 
 const playersCard = document.querySelector(".players-card");
-const currentPlayersStepper = document.querySelector("#currentPlayersStepper");
-const currentPlayersInput = document.querySelector("#currentPlayersInput");
+const currentPlayersDisplay = document.querySelector("#currentPlayersDisplay");
 const currentPlayersLabel = document.querySelector("#currentPlayersLabel");
 const allPlayersBadge = document.querySelector("#allPlayersBadge");
 const minPlayersInput = document.querySelector("#minPlayersInput");
@@ -135,12 +194,13 @@ function loadState() {
     }
 
     const parsedState = JSON.parse(savedState);
-    const sports = DEFAULT_SPORTS.map((sport) => ({
-      ...sport,
-      enabled:
-        parsedState?.sports?.find((savedSport) => savedSport.id === sport.id)
-          ?.enabled ?? sport.enabled,
-    }));
+    const hasSavedSports = Array.isArray(parsedState?.sports);
+    const savedSports = hasSavedSports ? parsedState.sports : [];
+    const sports = hasSavedSports
+      ? savedSports
+          .map((savedSport) => buildSportFromSavedState(savedSport))
+          .filter(Boolean)
+      : cloneData(defaultState.sports);
 
     const teams =
       Array.isArray(parsedState?.teams) && parsedState.teams.length > 0
@@ -154,10 +214,15 @@ function loadState() {
     const minutes = normalizeNumber(parsedState?.timer?.minutes, 0, 99, 5);
     const seconds = normalizeNumber(parsedState?.timer?.seconds, 0, 59, 0);
     const fallbackRemaining = minutes * 60 + seconds;
+    const selectedSportName =
+      typeof parsedState?.selectedSport === "string" &&
+      sports.some((sport) => sport.name === parsedState.selectedSport)
+        ? parsedState.selectedSport
+        : defaultState.selectedSport;
 
     return {
       sports,
-      selectedSport: parsedState?.selectedSport || defaultState.selectedSport,
+      selectedSport: selectedSportName,
       players: {
         current: normalizeNumber(parsedState?.players?.current, 1, 99, 10),
         min: normalizeNumber(parsedState?.players?.min, 1, 99, 6),
@@ -188,15 +253,16 @@ function attachEvents() {
 
   pickSportButton.addEventListener("click", pickRandomSport);
   toggleAllSportsButton.addEventListener("click", toggleAllSports);
+  addSportSelect.addEventListener("change", updateAddSportButtonState);
+  customSportInput.addEventListener("input", handleCustomSportInput);
+  customSportInput.addEventListener("keydown", handleCustomSportKeydown);
+  addSportButton.addEventListener("click", addSelectedSport);
 
   sportsList.addEventListener("click", handleSportTileClick);
   sportsList.addEventListener("change", handleSportToggleChange);
 
   randomPlayersButton.addEventListener("click", randomizePlayers);
-  attachNumericFieldEvents(
-    [currentPlayersInput, minPlayersInput, maxPlayersInput],
-    handlePlayerInputs
-  );
+  attachNumericFieldEvents([minPlayersInput, maxPlayersInput], handlePlayerInputs);
 
   attachNumericFieldEvents([teamCountInput], handleTeamCountChange);
   teamsContainer.addEventListener("change", handleTeamFieldChange);
@@ -250,11 +316,13 @@ function renderHero() {
   const enabledSports = state.sports.filter((sport) => sport.enabled);
 
   heroCard.style.setProperty("--hero-image", `url("${activeSport.image}")`);
-  selectedSportDisplay.textContent = state.selectedSport;
+  selectedSportDisplay.textContent = getSelectedSportLabel();
   enabledSportsCount.textContent =
-    enabledSports.length > 0
-      ? `${enabledSports.length} sporten actief voor random`
-      : "Zet minstens 1 sport aan";
+    state.sports.length === 0
+      ? "Voeg eerst een sport toe"
+      : enabledSports.length > 0
+        ? `${enabledSports.length} sporten actief om uit te kiezen`
+        : "Zet minstens 1 sport aan";
   heroPlayersStat.textContent = getPlayersDisplayText();
   heroTeamsStat.textContent = state.teams.length;
   heroTimerStat.textContent = formatTime(state.timer.remainingSeconds);
@@ -264,9 +332,25 @@ function renderHero() {
 function renderSportSelection() {
   const enabledSports = state.sports.filter((sport) => sport.enabled);
   toggleAllSportsButton.textContent =
-    enabledSports.length === state.sports.length ? "Alles uit" : "Alles aan";
+    state.sports.length === 0
+      ? "Geen sporten"
+      : enabledSports.length === state.sports.length
+        ? "Alles uit"
+        : "Alles aan";
+  toggleAllSportsButton.disabled = state.sports.length === 0;
+  renderAddSportControls();
 
   sportsList.innerHTML = "";
+
+  if (state.sports.length === 0) {
+    sportsList.innerHTML = `
+      <div class="sports-empty-state">
+        <strong>Geen sporten in de lijst</strong>
+        <span>Kies hierboven een sport of typ er zelf een.</span>
+      </div>
+    `;
+    return;
+  }
 
   state.sports.forEach((sport) => {
     const isSelected = state.selectedSport === sport.name;
@@ -280,6 +364,19 @@ function renderSportSelection() {
       .join(" ");
     tile.style.setProperty("--sport-image", `url("${sport.image}")`);
     tile.innerHTML = `
+      ${
+        sport.removable
+          ? `<button
+        class="sport-tile__remove"
+        type="button"
+        data-action="remove-sport"
+        data-sport-id="${sport.id}"
+        aria-label="${sport.name} verwijderen"
+      >
+        x
+      </button>`
+          : ""
+      }
       <button
         class="sport-tile__select"
         type="button"
@@ -300,6 +397,25 @@ function renderSportSelection() {
   });
 }
 
+function renderAddSportControls() {
+  const availableSports = getAvailableSportsToAdd();
+  const currentValue = availableSports.some((sport) => sport.id === addSportSelect.value)
+    ? addSportSelect.value
+    : "";
+  const placeholderLabel =
+    availableSports.length > 0 ? "Sport toevoegen" : "Geen sporten over";
+
+  addSportSelect.innerHTML = [
+    `<option value="">${placeholderLabel}</option>`,
+    ...availableSports.map(
+      (sport) => `<option value="${sport.id}">${escapeHtml(sport.name)}</option>`
+    ),
+  ].join("");
+  addSportSelect.value = currentValue;
+  addSportSelect.disabled = availableSports.length === 0;
+  updateAddSportButtonState();
+}
+
 function renderPlayers() {
   const trefbalActive = isTrefbalSelected();
   const normalizedRange = normalizePlayerRange(state.players.min, state.players.max);
@@ -312,17 +428,14 @@ function renderPlayers() {
     state.players.min
   );
 
-  currentPlayersInput.value = state.players.current;
-  currentPlayersInput.disabled = trefbalActive;
-  currentPlayersStepper.hidden = trefbalActive;
+  currentPlayersDisplay.textContent = String(state.players.current);
+  currentPlayersDisplay.hidden = trefbalActive;
   allPlayersBadge.hidden = !trefbalActive;
   minPlayersInput.value = state.players.min;
   maxPlayersInput.value = state.players.max;
   randomPlayersButton.disabled = trefbalActive;
   currentPlayersLabel.textContent = "Gekozen aantal";
   currentPlayersLabel.hidden = trefbalActive;
-  currentPlayersLabel.htmlFor = trefbalActive ? "" : "currentPlayersInput";
-  currentPlayersInput.setAttribute("aria-hidden", String(trefbalActive));
   playersCard.classList.toggle("is-all-players", trefbalActive);
 }
 
@@ -381,7 +494,7 @@ function renderTimer() {
 function renderGameMode() {
   const activeSport = getDisplaySport();
   gameModePanel.style.setProperty("--hero-image", `url("${activeSport.image}")`);
-  overlaySportValue.textContent = state.selectedSport;
+  overlaySportValue.textContent = getSelectedSportLabel();
   overlayPlayersValue.textContent = getPlayersDisplayText();
   overlayTeamsValue.textContent = state.teams.length;
   overlayStatusValue.textContent = getTimerStatusLabel();
@@ -438,7 +551,18 @@ function renderGameMode() {
 }
 
 function handleSportTileClick(event) {
-  const button = event.target.closest('[data-action="select-sport"]');
+  const target = event.target;
+  if (!(target instanceof Element)) {
+    return;
+  }
+
+  const removeButton = target.closest('[data-action="remove-sport"]');
+  if (removeButton instanceof HTMLButtonElement) {
+    removeSport(removeButton.dataset.sportId);
+    return;
+  }
+
+  const button = target.closest('[data-action="select-sport"]');
   if (!(button instanceof HTMLButtonElement)) {
     return;
   }
@@ -468,6 +592,81 @@ function handleSportToggleChange(event) {
   }
 
   sport.enabled = target.checked;
+  render();
+}
+
+function updateAddSportButtonState() {
+  addSportButton.disabled =
+    !getCustomSportName() && (!addSportSelect.value || addSportSelect.disabled);
+}
+
+function addSelectedSport() {
+  const customSportName = getCustomSportName();
+  if (customSportName) {
+    const existingSport = state.sports.find(
+      (sport) => sport.name.toLowerCase() === customSportName.toLowerCase()
+    );
+    if (existingSport) {
+      existingSport.enabled = true;
+      state.selectedSport = existingSport.name;
+      customSportInput.value = "";
+      addSportSelect.value = "";
+      render();
+      return;
+    }
+
+    const customDefinition = createCustomSportDefinition(customSportName);
+    state.sports.push(buildSportFromDefinition(customDefinition, true));
+    state.selectedSport = customDefinition.name;
+    customSportInput.value = "";
+    addSportSelect.value = "";
+    render();
+    return;
+  }
+
+  const sportId = addSportSelect.value;
+  const definition = getSportDefinition(sportId);
+  if (!definition || state.sports.some((sport) => sport.id === sportId)) {
+    return;
+  }
+
+  state.sports.push(buildSportFromDefinition(definition, true));
+  addSportSelect.value = "";
+  render();
+}
+
+function handleCustomSportInput(event) {
+  const target = event.target;
+  if (!(target instanceof HTMLInputElement)) {
+    return;
+  }
+
+  target.value = target.value.replace(/\s+/g, " ").replace(/^\s+/, "");
+  updateAddSportButtonState();
+}
+
+function handleCustomSportKeydown(event) {
+  if (event.key !== "Enter") {
+    return;
+  }
+
+  event.preventDefault();
+  addSelectedSport();
+}
+
+function removeSport(sportId) {
+  const sportToRemove = state.sports.find((sport) => sport.id === sportId);
+  if (!sportToRemove) {
+    return;
+  }
+
+  state.sports = state.sports.filter((sport) => sport.id !== sportId);
+
+  if (state.selectedSport === sportToRemove.name) {
+    const fallbackSport = state.sports.find((sport) => sport.enabled) || state.sports[0];
+    state.selectedSport = fallbackSport ? fallbackSport.name : defaultState.selectedSport;
+  }
+
   render();
 }
 
@@ -530,21 +729,6 @@ function handleStepperButtonClick(event) {
 }
 
 function adjustStepperValue(targetId, delta) {
-  if (targetId === "currentPlayersInput") {
-    if (isTrefbalSelected()) {
-      return;
-    }
-
-    state.players.current = normalizeNumber(
-      state.players.current + delta,
-      state.players.min,
-      state.players.max,
-      state.players.min
-    );
-    render();
-    return;
-  }
-
   if (targetId === "minPlayersInput") {
     state.players.min = normalizeNumber(state.players.min + delta, 1, 99, 6);
     render();
@@ -582,6 +766,12 @@ function adjustStepperValue(targetId, delta) {
 }
 
 function pickRandomSport() {
+  if (state.sports.length === 0) {
+    state.selectedSport = "Voeg eerst een sport toe";
+    render();
+    return;
+  }
+
   const enabledSports = state.sports.filter((sport) => sport.enabled);
   if (enabledSports.length === 0) {
     state.selectedSport = "Zet eerst een sport aan";
@@ -605,6 +795,10 @@ function selectSport(sportName) {
 }
 
 function toggleAllSports() {
+  if (state.sports.length === 0) {
+    return;
+  }
+
   const enabledSports = state.sports.filter((sport) => sport.enabled);
   const shouldEnableAll = enabledSports.length !== state.sports.length;
 
@@ -618,7 +812,7 @@ function toggleAllSports() {
 function handlePlayerInputs() {
   state.players.min = normalizeNumber(minPlayersInput.value, 1, 99, 6);
   state.players.max = normalizeNumber(maxPlayersInput.value, 1, 99, 14);
-  state.players.current = normalizeNumber(currentPlayersInput.value, 1, 99, state.players.current);
+  state.players.current = normalizeNumber(state.players.current, 1, 99, state.players.min);
   render();
 }
 
@@ -850,11 +1044,15 @@ function getDisplaySport() {
     return selected;
   }
 
-  return state.sports.find((sport) => sport.enabled) || state.sports[0];
+  return state.sports.find((sport) => sport.enabled) || state.sports[0] || FALLBACK_SPORT;
 }
 
 function isTrefbalSelected() {
   return getDisplaySport().id === "trefbal" && state.selectedSport === "Trefbal";
+}
+
+function getSelectedSportLabel() {
+  return state.sports.length === 0 ? "Voeg sport toe" : state.selectedSport;
 }
 
 function getPlayersDisplayText() {
@@ -871,6 +1069,36 @@ function getTimerStatusLabel() {
   }
 
   return "Gepauzeerd";
+}
+
+function getSportDefinition(sportId) {
+  return SPORT_LIBRARY.find((sport) => sport.id === sportId);
+}
+
+function buildSportFromDefinition(definition, enabled = true) {
+  if (!definition) {
+    return null;
+  }
+
+  return {
+    id: definition.id,
+    name: definition.name,
+    enabled,
+    custom: Boolean(definition.custom),
+    image:
+      definition.image ||
+      createSportArtwork(definition.name, definition.mark, definition.colors || [
+        "#0e78ff",
+        "#23a565",
+      ]),
+    removable: true,
+  };
+}
+
+function getAvailableSportsToAdd() {
+  return SPORT_LIBRARY.filter(
+    (sport) => !state.sports.some((activeSport) => activeSport.id === sport.id)
+  );
 }
 
 function normalizePlayerRange(minValue, maxValue) {
@@ -897,7 +1125,15 @@ function formatTime(totalSeconds) {
 function persistState() {
   writeStorage(
     JSON.stringify({
-      ...state,
+      sports: state.sports.map((sport) => ({
+        id: sport.id,
+        name: sport.name,
+        enabled: sport.enabled,
+        custom: Boolean(sport.custom),
+      })),
+      selectedSport: state.selectedSport,
+      players: state.players,
+      teams: state.teams,
       timer: {
         ...state.timer,
         isRunning: false,
@@ -917,6 +1153,124 @@ function escapeHtml(text) {
 
 function cloneData(value) {
   return JSON.parse(JSON.stringify(value));
+}
+
+function buildSportFromSavedState(savedSport) {
+  if (!savedSport || typeof savedSport.id !== "string") {
+    return null;
+  }
+
+  const definition =
+    getSportDefinition(savedSport.id) ||
+    (savedSport.custom && typeof savedSport.name === "string"
+      ? createCustomSportDefinition(savedSport.name, savedSport.id)
+      : null);
+
+  if (!definition) {
+    return null;
+  }
+
+  return buildSportFromDefinition(
+    definition,
+    savedSport.enabled ?? definition.defaultEnabled ?? true
+  );
+}
+
+function getCustomSportName() {
+  return customSportInput.value.trim().replace(/\s+/g, " ");
+}
+
+function createCustomSportDefinition(name, existingId) {
+  const trimmedName = name.trim().replace(/\s+/g, " ");
+  const sportId = existingId || createUniqueCustomSportId(trimmedName);
+  const colors = getCustomSportColors(sportId);
+
+  return {
+    id: sportId,
+    name: trimmedName,
+    mark: getSportMark(trimmedName),
+    colors,
+    custom: true,
+  };
+}
+
+function createUniqueCustomSportId(name) {
+  const baseId = `eigen-${slugifySportName(name) || "sport"}`;
+  if (!state.sports.some((sport) => sport.id === baseId)) {
+    return baseId;
+  }
+
+  let suffix = 2;
+  while (state.sports.some((sport) => sport.id === `${baseId}-${suffix}`)) {
+    suffix += 1;
+  }
+
+  return `${baseId}-${suffix}`;
+}
+
+function slugifySportName(name) {
+  return name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function getSportMark(name) {
+  const words = name
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  const letters =
+    words.length >= 2
+      ? `${words[0][0] || ""}${words[1][0] || ""}`
+      : name.replace(/[^A-Za-z0-9]/g, "").slice(0, 2);
+
+  return (letters || "SP").toUpperCase();
+}
+
+function getCustomSportColors(seed) {
+  const palettes = [
+    ["#0e78ff", "#23a565"],
+    ["#ff8a00", "#ff4d6d"],
+    ["#11b48c", "#0a7e7a"],
+    ["#7a4dff", "#3854d8"],
+    ["#ffb347", "#d96a1d"],
+    ["#d9485a", "#f28b2f"],
+    ["#00a6b8", "#0e78ff"],
+  ];
+  let hash = 0;
+
+  for (const character of seed) {
+    hash = (hash * 31 + character.charCodeAt(0)) >>> 0;
+  }
+
+  return palettes[hash % palettes.length];
+}
+
+function createSportArtwork(label, mark, colors) {
+  const [primary, secondary] = colors;
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 520" role="img" aria-label="${label}">
+      <defs>
+        <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="${primary}" />
+          <stop offset="100%" stop-color="${secondary}" />
+        </linearGradient>
+      </defs>
+      <rect width="900" height="520" fill="url(#g)" />
+      <circle cx="130" cy="130" r="86" fill="rgba(255,255,255,0.15)" />
+      <circle cx="762" cy="112" r="58" fill="rgba(255,255,255,0.18)" />
+      <circle cx="726" cy="378" r="126" fill="rgba(255,255,255,0.08)" />
+      <path d="M90 400c130-112 246-138 356-136 136 1 235 43 340 114" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="18" stroke-linecap="round"/>
+      <path d="M150 456c86-88 154-128 242-164" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="14" stroke-linecap="round"/>
+      <text x="68" y="92" fill="rgba(255,255,255,0.84)" font-family="Inter, Arial, sans-serif" font-size="48" font-weight="700">${label}</text>
+      <text x="480" y="354" fill="rgba(255,255,255,0.24)" font-family="Inter, Arial, sans-serif" font-size="204" font-weight="900">${mark}</text>
+    </svg>
+  `.trim();
+
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
 }
 
 function getAudioContext() {
