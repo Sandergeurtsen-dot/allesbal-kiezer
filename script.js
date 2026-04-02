@@ -468,8 +468,8 @@ function renderTeams() {
           <div class="team-preview" style="background:${team.color}"></div>
           <strong>${escapeHtml(displayName)}</strong>
         </div>
-        <div class="team-score">${team.score}</div>
       </div>
+      <div class="team-score">${team.score}</div>
       <div class="team-actions">
         <button class="team-minus" type="button" data-team-index="${index}" data-action="minus">
           -1
