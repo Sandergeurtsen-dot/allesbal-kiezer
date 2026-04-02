@@ -328,6 +328,9 @@
                   </button>
                 </div>
               </label>
+              <button id="openTeamSettingsButton" class="secondary-button" type="button">
+                Instellingen
+              </button>
               <button id="resetScoresButton" class="ghost-button" type="button">
                 Reset scores
               </button>
@@ -336,6 +339,30 @@
           <div id="teamsContainer" class="teams-container"></div>
         </section>
       </main>
+    </div>
+
+    <div id="teamSettingsOverlay" class="settings-overlay" aria-hidden="true">
+      <div id="teamSettingsBackdrop" class="settings-overlay__backdrop"></div>
+
+      <section
+        id="teamSettingsPanel"
+        class="settings-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Teaminstellingen"
+      >
+        <header class="settings-panel__header">
+          <div>
+            <p class="label">Teams</p>
+            <h2>Teaminstellingen</h2>
+          </div>
+          <button id="closeTeamSettingsButton" class="ghost-button" type="button">
+            Sluit
+          </button>
+        </header>
+
+        <div id="teamSettingsContainer" class="team-settings-list"></div>
+      </section>
     </div>
 
     <div id="gameModeOverlay" class="game-overlay" aria-hidden="true">

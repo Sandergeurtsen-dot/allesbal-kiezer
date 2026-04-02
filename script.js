@@ -146,6 +146,7 @@ const randomPlayersButton = document.querySelector("#randomPlayersButton");
 
 const teamCountInput = document.querySelector("#teamCountInput");
 const teamsContainer = document.querySelector("#teamsContainer");
+const openTeamSettingsButton = document.querySelector("#openTeamSettingsButton");
 const resetScoresButton = document.querySelector("#resetScoresButton");
 
 const timerDisplay = document.querySelector("#timerDisplay");
@@ -155,6 +156,11 @@ const applyTimerButton = document.querySelector("#applyTimerButton");
 const openGameModeButton = document.querySelector("#openGameModeButton");
 const startPauseTimerButton = document.querySelector("#startPauseTimerButton");
 const resetTimerButton = document.querySelector("#resetTimerButton");
+
+const teamSettingsOverlay = document.querySelector("#teamSettingsOverlay");
+const teamSettingsBackdrop = document.querySelector("#teamSettingsBackdrop");
+const closeTeamSettingsButton = document.querySelector("#closeTeamSettingsButton");
+const teamSettingsContainer = document.querySelector("#teamSettingsContainer");
 
 const gameModeOverlay = document.querySelector("#gameModeOverlay");
 const gameModePanel = document.querySelector("#gameModePanel");
@@ -174,6 +180,7 @@ const resetAppButton = document.querySelector("#resetAppButton");
 
 let timerIntervalId = null;
 let isGameModeOpen = false;
+let isTeamSettingsOpen = false;
 let audioContext = null;
 let hasPlayedTimerEndSound = false;
 
@@ -259,8 +266,11 @@ function attachEvents() {
   attachNumericFieldEvents([minPlayersInput, maxPlayersInput], handlePlayerInputs);
 
   attachNumericFieldEvents([teamCountInput], handleTeamCountChange);
-  teamsContainer.addEventListener("change", handleTeamFieldChange);
   teamsContainer.addEventListener("click", handleTeamScoreAction);
+  openTeamSettingsButton.addEventListener("click", openTeamSettings);
+  teamSettingsBackdrop.addEventListener("click", closeTeamSettings);
+  closeTeamSettingsButton.addEventListener("click", closeTeamSettings);
+  teamSettingsContainer.addEventListener("change", handleTeamFieldChange);
   resetScoresButton.addEventListener("click", resetScores);
 
   applyTimerButton.addEventListener("click", applyTimerSettings);
@@ -279,8 +289,17 @@ function attachEvents() {
   resetAppButton.addEventListener("click", resetApp);
 
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && isGameModeOpen) {
+    if (event.key !== "Escape") {
+      return;
+    }
+
+    if (isGameModeOpen) {
       closeGameMode();
+      return;
+    }
+
+    if (isTeamSettingsOpen) {
+      closeTeamSettings();
     }
   });
 }
@@ -300,6 +319,7 @@ function render() {
   renderSportSelection();
   renderPlayers();
   renderTeams();
+  renderTeamSettings();
   renderTimer();
   renderGameMode();
   persistState();
@@ -448,18 +468,8 @@ function renderTeams() {
           <div class="team-preview" style="background:${team.color}"></div>
           <strong>${escapeHtml(displayName)}</strong>
         </div>
-        <div class="team-score">${team.score}</div>
       </div>
-      <label class="field">
-        <span>Naam team ${index + 1}</span>
-        <input type="text" data-team-index="${index}" data-field="name" value="${escapeHtml(
-          team.name
-        )}" />
-      </label>
-      <label class="field">
-        <span>Kleur</span>
-        <input type="color" data-team-index="${index}" data-field="color" value="${team.color}" />
-      </label>
+      <div class="team-score">${team.score}</div>
       <div class="team-actions">
         <button class="team-minus" type="button" data-team-index="${index}" data-action="minus">
           -1
@@ -475,6 +485,42 @@ function renderTeams() {
 
     teamsContainer.appendChild(teamCard);
   });
+}
+
+function renderTeamSettings() {
+  teamSettingsContainer.innerHTML = "";
+
+  state.teams.forEach((team, index) => {
+    const displayName = team.name.trim() || `Team ${index + 1}`;
+    const settingsCard = document.createElement("article");
+    settingsCard.className = "team-settings-card";
+    settingsCard.style.borderTop = `6px solid ${team.color}`;
+    settingsCard.innerHTML = `
+      <div class="team-settings-card__header">
+        <div class="team-card__title">
+          <div class="team-preview" style="background:${team.color}"></div>
+          <strong>${escapeHtml(displayName)}</strong>
+        </div>
+        <span class="team-settings-card__score">Score ${team.score}</span>
+      </div>
+      <label class="field">
+        <span>Naam team ${index + 1}</span>
+        <input type="text" data-team-index="${index}" data-field="name" value="${escapeHtml(
+          team.name
+        )}" />
+      </label>
+      <label class="field">
+        <span>Kleur</span>
+        <input type="color" data-team-index="${index}" data-field="color" value="${team.color}" />
+      </label>
+    `;
+
+    teamSettingsContainer.appendChild(settingsCard);
+  });
+
+  teamSettingsOverlay.classList.toggle("is-open", isTeamSettingsOpen);
+  document.body.classList.toggle("team-settings-open", isTeamSettingsOpen);
+  teamSettingsOverlay.setAttribute("aria-hidden", String(!isTeamSettingsOpen));
 }
 
 function renderTimer() {
@@ -1008,18 +1054,31 @@ function stopTimerInterval() {
 }
 
 function openGameMode() {
+  isTeamSettingsOpen = false;
   isGameModeOpen = true;
-  renderGameMode();
+  render();
 }
 
 function closeGameMode() {
   isGameModeOpen = false;
-  renderGameMode();
+  render();
+}
+
+function openTeamSettings() {
+  isGameModeOpen = false;
+  isTeamSettingsOpen = true;
+  render();
+}
+
+function closeTeamSettings() {
+  isTeamSettingsOpen = false;
+  render();
 }
 
 function resetApp() {
   stopTimerInterval();
   isGameModeOpen = false;
+  isTeamSettingsOpen = false;
   hasPlayedTimerEndSound = false;
 
   const freshState = cloneData(defaultState);

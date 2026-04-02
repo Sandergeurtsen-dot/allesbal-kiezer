@@ -820,6 +820,7 @@ input[type="text"][inputmode="numeric"] {
 }
 
 .teams-toolbar {
+  flex-wrap: wrap;
   align-items: flex-end;
 }
 
@@ -835,7 +836,9 @@ input[type="text"][inputmode="numeric"] {
 
 .team-card {
   display: grid;
-  gap: 0.5rem;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.42rem;
   padding: 0.72rem;
   background: var(--panel-strong);
   border: 1px solid var(--border);
@@ -846,7 +849,7 @@ input[type="text"][inputmode="numeric"] {
 .team-card__header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 0.65rem;
 }
 
@@ -872,6 +875,13 @@ input[type="text"][inputmode="numeric"] {
 }
 
 .team-score {
+  display: grid;
+  place-items: center;
+  min-height: 52px;
+  border-radius: 16px;
+  background:
+    linear-gradient(135deg, rgba(14, 120, 255, 0.08), rgba(35, 165, 101, 0.08)),
+    var(--panel-strong);
   text-align: center;
   font-size: clamp(1.35rem, 2.2vw, 1.9rem);
   font-weight: 900;
@@ -905,6 +915,98 @@ input[type="text"][inputmode="numeric"] {
 .team-reset {
   background: rgba(14, 120, 255, 0.1);
   color: var(--accent-strong);
+}
+
+.team-settings-open .app-shell {
+  filter: blur(4px) saturate(0.9);
+  transform: scale(0.995);
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.settings-overlay {
+  position: fixed;
+  inset: 0;
+  display: none;
+  place-items: center;
+  padding: 1rem;
+  z-index: 35;
+}
+
+.settings-overlay.is-open {
+  display: grid;
+}
+
+.settings-overlay__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 16, 31, 0.58);
+  backdrop-filter: blur(12px);
+}
+
+.settings-panel {
+  position: relative;
+  z-index: 1;
+  width: min(860px, calc(100vw - 2rem));
+  max-height: min(720px, calc(100dvh - 2rem));
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 0.85rem;
+  padding: 1rem;
+  overflow: hidden;
+  border-radius: 28px;
+  border: 1px solid var(--border);
+  background: var(--panel-strong);
+  box-shadow: 0 24px 60px rgba(2, 10, 22, 0.28);
+}
+
+.settings-panel__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.settings-panel__header h2 {
+  margin: 0.15rem 0 0;
+  font-size: 1.2rem;
+}
+
+.team-settings-list {
+  min-height: 0;
+  overflow: auto;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+  padding-right: 0.25rem;
+}
+
+.team-settings-card {
+  display: grid;
+  gap: 0.65rem;
+  padding: 0.85rem;
+  background:
+    linear-gradient(135deg, rgba(14, 120, 255, 0.04), rgba(35, 165, 101, 0.05)),
+    var(--panel-strong);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.team-settings-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+}
+
+.team-settings-card__score {
+  padding: 0.32rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(14, 120, 255, 0.08);
+  color: var(--accent-strong);
+  font-size: 0.82rem;
+  font-weight: 800;
+  white-space: nowrap;
 }
 
 .game-overlay {
@@ -1193,6 +1295,7 @@ input[type="text"][inputmode="numeric"] {
   .range-grid,
   .player-range-grid,
   .team-actions,
+  .team-settings-list,
   .overlay-team__actions,
   .game-overlay__meta {
     grid-template-columns: 1fr;
@@ -1218,6 +1321,17 @@ input[type="text"][inputmode="numeric"] {
 
   .game-overlay {
     padding: 0.5rem;
+  }
+
+  .settings-overlay {
+    padding: 0.5rem;
+  }
+
+  .settings-panel {
+    width: calc(100vw - 1rem);
+    max-height: calc(100dvh - 1rem);
+    border-radius: 22px;
+    padding: 0.85rem;
   }
 
   .game-overlay__panel {
@@ -1468,6 +1582,8 @@ input[type="text"][inputmode="numeric"] {
   }
 
   .team-score {
+    min-height: 42px;
+    border-radius: 12px;
     font-size: 1.18rem;
   }
 
@@ -1500,6 +1616,16 @@ input[type="text"][inputmode="numeric"] {
     width: 12px;
     height: 12px;
   }
+
+  .team-settings-list {
+    gap: 0.55rem;
+  }
+
+  .team-settings-card {
+    gap: 0.5rem;
+    padding: 0.68rem;
+    border-radius: 16px;
+  }
 }
 
 @media (min-width: 820px) and (max-width: 1180px) and (orientation: landscape) {
@@ -1519,6 +1645,7 @@ input[type="text"][inputmode="numeric"] {
   }
 
   .team-score {
+    min-height: 36px !important;
     font-size: 1.08rem !important;
   }
 
@@ -1848,6 +1975,8 @@ input[type="text"][inputmode="numeric"] {
   }
 
   .team-score {
+    min-height: 32px !important;
+    border-radius: 10px !important;
     font-size: 0.96rem !important;
   }
 
@@ -1880,5 +2009,15 @@ input[type="text"][inputmode="numeric"] {
     padding: 0.2rem 0.08rem !important;
     font-size: 0.58rem !important;
     border-radius: 8px !important;
+  }
+
+  .team-settings-list {
+    gap: 0.42rem !important;
+  }
+
+  .team-settings-card {
+    gap: 0.42rem !important;
+    padding: 0.56rem !important;
+    border-radius: 14px !important;
   }
 }
