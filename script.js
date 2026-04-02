@@ -76,12 +76,6 @@ const SPORT_LIBRARY = [
     mark: "RG",
     colors: ["#d9485a", "#f28b2f"],
   },
-  {
-    id: "tafeltennis",
-    name: "Tafeltennis",
-    mark: "TT",
-    colors: ["#00a6b8", "#0e78ff"],
-  },
 ];
 
 const DEFAULT_SPORTS = DEFAULT_SPORT_IDS.map((sportId) =>
