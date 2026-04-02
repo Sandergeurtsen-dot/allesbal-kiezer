@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="nl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#14314f" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Allesbal Kiezer" />
+    <title>Allesbal Kiezer</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="app-header">
+        <div>
+          <p class="eyebrow">iPad Sportdashboard</p>
+          <h1>Allesbal Kiezer</h1>
+          <p class="subtitle">
+            Kies een sport, randomiseer spelers, stel teams in en start daarna
+            direct de speelmodus.
+          </p>
+        </div>
+        <button id="resetAppButton" class="ghost-button" type="button">
+          Reset alles
+        </button>
+      </header>
+
+      <main class="app-grid">
+        <section id="heroCard" class="card hero-card">
+          <div class="hero-card__content">
+            <div class="hero-copy">
+              <p class="label">Gekozen sport</p>
+              <div id="selectedSportDisplay" class="hero-value">Klaar om te kiezen</div>
+              <p id="enabledSportsCount" class="hint hero-hint">6 sporten actief</p>
+            </div>
+
+            <div class="hero-sidebar">
+              <div class="hero-stats">
+                <div class="hero-stat">
+                  <span>Spelers</span>
+                  <strong id="heroPlayersStat">10</strong>
+                </div>
+                <div class="hero-stat">
+                  <span>Teams</span>
+                  <strong id="heroTeamsStat">2</strong>
+                </div>
+                <div class="hero-stat">
+                  <span>Timer</span>
+                  <strong id="heroTimerStat">05:00</strong>
+                </div>
+              </div>
+
+              <button id="pickSportButton" class="primary-button" type="button">
+                Kies random sport
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section class="card players-card">
+          <div class="card-header">
+            <div>
+              <p class="label">Spelers</p>
+              <h2>Aantal spelers</h2>
+            </div>
+            <button id="randomPlayersButton" class="secondary-button" type="button">
+              Random
+            </button>
+          </div>
+
+          <div class="players-layout">
+            <div class="players-current">
+              <label id="currentPlayersLabel" class="label" for="currentPlayersInput">
+                Gekozen aantal
+              </label>
+              <input
+                id="currentPlayersInput"
+                class="large-number-input"
+                type="number"
+                min="1"
+                max="99"
+                value="10"
+              />
+              <div id="allPlayersBadge" class="all-players-badge" hidden>
+                <strong>Iedereen doet mee</strong>
+              </div>
+            </div>
+
+            <div class="players-range-panel">
+              <p class="players-range-title">Random bereik</p>
+              <div class="player-range-grid">
+                <label class="field">
+                  <span>Minimum</span>
+                  <input
+                    id="minPlayersInput"
+                    class="range-number-input"
+                    type="number"
+                    min="1"
+                    max="99"
+                    value="6"
+                  />
+                </label>
+                <label class="field">
+                  <span>Maximum</span>
+                  <input
+                    id="maxPlayersInput"
+                    class="range-number-input"
+                    type="number"
+                    min="1"
+                    max="99"
+                    value="14"
+                  />
+                </label>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card sports-card">
+          <div class="card-header">
+            <div>
+              <p class="label">Sporten</p>
+              <h2>Sporttegels met beeld</h2>
+            </div>
+            <button id="toggleAllSportsButton" class="ghost-button" type="button">
+              Alles uit
+            </button>
+          </div>
+          <div id="sportsList" class="sports-grid"></div>
+        </section>
+
+        <section class="card timer-card">
+          <div class="card-header">
+            <div>
+              <p class="label">Timer</p>
+              <h2>Tijd en speelmodus</h2>
+            </div>
+            <div class="timer-actions">
+              <button id="startPauseTimerButton" class="primary-button" type="button">
+                Start
+              </button>
+              <button id="resetTimerButton" class="secondary-button" type="button">
+                Reset
+              </button>
+            </div>
+          </div>
+
+          <div id="timerDisplay" class="timer-display">05:00</div>
+
+          <div class="range-grid timer-range-grid">
+            <label class="field">
+              <span>Minuten</span>
+              <input id="timerMinutesInput" type="number" min="0" max="99" value="5" />
+            </label>
+            <label class="field">
+              <span>Seconden</span>
+              <input id="timerSecondsInput" type="number" min="0" max="59" value="0" />
+            </label>
+          </div>
+
+          <div class="timer-footer">
+            <button id="applyTimerButton" class="ghost-button full-width" type="button">
+              Zet ingestelde tijd
+            </button>
+            <button id="openGameModeButton" class="secondary-button full-width" type="button">
+              Open speelmodus
+            </button>
+          </div>
+        </section>
+
+        <section class="card teams-card">
+          <div class="card-header">
+            <div>
+              <p class="label">Teams en score</p>
+              <h2>Instellen en bijhouden</h2>
+            </div>
+            <div class="teams-toolbar">
+              <label class="field compact-field">
+                <span>Aantal teams</span>
+                <input id="teamCountInput" type="number" min="1" max="8" value="2" />
+              </label>
+              <button id="resetScoresButton" class="ghost-button" type="button">
+                Reset scores
+              </button>
+            </div>
+          </div>
+          <div id="teamsContainer" class="teams-container"></div>
+        </section>
+      </main>
+    </div>
+
+    <div id="gameModeOverlay" class="game-overlay" aria-hidden="true">
+      <div id="gameOverlayBackdrop" class="game-overlay__backdrop"></div>
+
+      <section
+        id="gameModePanel"
+        class="game-overlay__panel"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Speelmodus"
+      >
+        <header class="game-overlay__header">
+          <div>
+            <p class="label game-overlay__label">Speelmodus</p>
+            <h2 id="overlaySportValue" class="game-overlay__title">Klaar om te starten</h2>
+          </div>
+          <button id="closeGameModeButton" class="ghost-button" type="button">
+            Sluit
+          </button>
+        </header>
+
+        <div class="game-overlay__meta">
+          <div class="overlay-chip">
+            <span>Spelers</span>
+            <strong id="overlayPlayersValue">10</strong>
+          </div>
+          <div class="overlay-chip">
+            <span>Teams</span>
+            <strong id="overlayTeamsValue">2</strong>
+          </div>
+          <div class="overlay-chip">
+            <span>Status</span>
+            <strong id="overlayStatusValue">Klaar</strong>
+          </div>
+        </div>
+
+        <div id="overlayTimerDisplay" class="overlay-timer-display">05:00</div>
+
+        <div id="overlayTeamsContainer" class="overlay-teams"></div>
+
+        <div class="overlay-controls">
+          <button id="overlayStartPauseButton" class="primary-button" type="button">
+            Start
+          </button>
+          <button id="overlayResetButton" class="secondary-button" type="button">
+            Reset timer
+          </button>
+          <button id="overlayPickSportButton" class="ghost-button" type="button">
+            Nieuwe sport
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <script src="./script.js"></script>
+  </body>
+</html>

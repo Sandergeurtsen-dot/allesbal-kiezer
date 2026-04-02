@@ -1,0 +1,9 @@
+{
+  "name": "Allesbal Kiezer",
+  "short_name": "Allesbal",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#eff3ff",
+  "theme_color": "#3056d3",
+  "lang": "nl"
+}
