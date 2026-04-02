@@ -471,14 +471,32 @@ function renderTeams() {
       </div>
       <div class="team-score">${team.score}</div>
       <div class="team-actions">
-        <button class="team-minus" type="button" data-team-index="${index}" data-action="minus">
-          -1
+        <button
+          class="team-minus"
+          type="button"
+          data-team-index="${index}"
+          data-action="minus"
+          aria-label="1 punt eraf voor ${escapeHtml(displayName)}"
+        >
+          &minus;
         </button>
-        <button class="team-plus" type="button" data-team-index="${index}" data-action="plus">
-          +1
+        <button
+          class="team-plus"
+          type="button"
+          data-team-index="${index}"
+          data-action="plus"
+          aria-label="1 punt erbij voor ${escapeHtml(displayName)}"
+        >
+          +
         </button>
-        <button class="team-reset" type="button" data-team-index="${index}" data-action="reset">
-          0
+        <button
+          class="team-reset"
+          type="button"
+          data-team-index="${index}"
+          data-action="reset"
+          aria-label="Score resetten voor ${escapeHtml(displayName)}"
+        >
+          Reset
         </button>
       </div>
     `;
@@ -528,7 +546,8 @@ function renderTimer() {
   timerSecondsInput.value = state.timer.seconds;
   timerDisplay.textContent = formatTime(state.timer.remainingSeconds);
   timerDisplay.classList.toggle("is-finished", state.timer.remainingSeconds === 0);
-  startPauseTimerButton.textContent = state.timer.isRunning ? "Pauze" : "Start";
+  startPauseTimerButton.textContent = state.timer.isRunning ? "Pauzeer" : "Start timer";
+  startPauseTimerButton.dataset.timerState = state.timer.isRunning ? "running" : "ready";
 }
 
 function renderGameMode() {
@@ -540,7 +559,8 @@ function renderGameMode() {
   overlayStatusValue.textContent = getTimerStatusLabel();
   overlayTimerDisplay.textContent = formatTime(state.timer.remainingSeconds);
   overlayTimerDisplay.classList.toggle("is-finished", state.timer.remainingSeconds === 0);
-  overlayStartPauseButton.textContent = state.timer.isRunning ? "Pauze" : "Start";
+  overlayStartPauseButton.textContent = state.timer.isRunning ? "Pauzeer" : "Start timer";
+  overlayStartPauseButton.dataset.timerState = state.timer.isRunning ? "running" : "ready";
 
   overlayTeamsContainer.innerHTML = "";
   state.teams.forEach((team, index) => {
@@ -560,24 +580,27 @@ function renderGameMode() {
           type="button"
           data-team-index="${index}"
           data-action="minus"
+          aria-label="1 punt eraf voor ${escapeHtml(displayName)}"
         >
-          -1
+          &minus;
         </button>
         <button
           class="overlay-team__plus"
           type="button"
           data-team-index="${index}"
           data-action="plus"
+          aria-label="1 punt erbij voor ${escapeHtml(displayName)}"
         >
-          +1
+          +
         </button>
         <button
           class="overlay-team__reset"
           type="button"
           data-team-index="${index}"
           data-action="reset"
+          aria-label="Score resetten voor ${escapeHtml(displayName)}"
         >
-          0
+          Reset
         </button>
       </div>
     `;
