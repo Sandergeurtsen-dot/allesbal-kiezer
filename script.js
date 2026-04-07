@@ -1347,18 +1347,19 @@ function shouldApplyFullSportPreset(previousSportName) {
 function applyPresetForSelectedSport(previousSportName = state.selectedSport) {
   const selectedSport = state.sports.find((sport) => sport.name === state.selectedSport);
   const preset = selectedSport ? getSportPreset(selectedSport.id) : null;
+  const shouldApplyFullPreset = shouldApplyFullSportPreset(previousSportName);
 
   if (!preset) {
     autoPickPlayersForSelectedSport();
     return;
   }
 
-  if (preset.players) {
+  if (shouldApplyFullPreset && preset.players) {
     state.players.min = preset.players.min;
     state.players.max = preset.players.max;
   }
 
-  if (shouldApplyFullSportPreset(previousSportName)) {
+  if (shouldApplyFullPreset) {
     stopTimerInterval();
     state.timer.isRunning = false;
     hasPlayedTimerEndSound = false;
