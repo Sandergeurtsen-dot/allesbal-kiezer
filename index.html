@@ -11,8 +11,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Allesbal Kiezer" />
     <title>Allesbal Kiezer</title>
-    <link rel="stylesheet" href="./styles.css?v=20260407-4" />
-    <link rel="manifest" href="./manifest.webmanifest?v=20260407-4" />
+    <link rel="stylesheet" href="./styles.css?v=20260407-5" />
+    <link rel="manifest" href="./manifest.webmanifest?v=20260407-5" />
   </head>
   <body>
     <div class="app-shell">
@@ -395,7 +395,7 @@
         <header class="game-overlay__header">
           <div>
             <p class="label game-overlay__label">Speelmodus</p>
-            <h2 id="overlaySportValue" class="game-overlay__title">Klaar om te starten</h2>
+            <p class="game-overlay__intro">Kijk hier voor de sport en het aantal spelers.</p>
           </div>
           <div class="game-overlay__header-actions">
             <button id="toggleLockGameModeButton" class="secondary-button" type="button">
@@ -407,11 +407,19 @@
           </div>
         </header>
 
+        <div class="game-overlay__spotlight">
+          <section class="game-overlay__sport-panel">
+            <p class="label game-overlay__label">Te spelen sport</p>
+            <h2 id="overlaySportValue" class="game-overlay__title">Klaar om te starten</h2>
+          </section>
+
+          <section class="game-overlay__players-panel">
+            <span class="game-overlay__players-label">Aantal spelers</span>
+            <strong id="overlayPlayersValue" class="game-overlay__players-value">10</strong>
+          </section>
+        </div>
+
         <div class="game-overlay__meta">
-          <div class="overlay-chip">
-            <span>Spelers</span>
-            <strong id="overlayPlayersValue">10</strong>
-          </div>
           <div class="overlay-chip">
             <span>Teams</span>
             <strong id="overlayTeamsValue">2</strong>
@@ -444,6 +452,6 @@
       </section>
     </div>
 
-    <script src="./script.js?v=20260407-4"></script>
+    <script src="./script.js?v=20260407-5"></script>
   </body>
 </html>
