@@ -971,8 +971,9 @@ function pickRandomSport() {
 }
 
 function selectSport(sportName) {
+  const previousSportName = state.selectedSport;
   state.selectedSport = sportName;
-  applyPresetForSelectedSport();
+  applyPresetForSelectedSport(previousSportName);
   render();
 }
 
@@ -1335,7 +1336,15 @@ function buildPresetSummary(preset) {
   )}`;
 }
 
-function applyPresetForSelectedSport() {
+function hasConcreteSelectedSport(sportName) {
+  return state.sports.some((sport) => sport.name === sportName);
+}
+
+function shouldApplyFullSportPreset(previousSportName) {
+  return !hasConcreteSelectedSport(previousSportName);
+}
+
+function applyPresetForSelectedSport(previousSportName = state.selectedSport) {
   const selectedSport = state.sports.find((sport) => sport.name === state.selectedSport);
   const preset = selectedSport ? getSportPreset(selectedSport.id) : null;
 
@@ -1344,19 +1353,20 @@ function applyPresetForSelectedSport() {
     return;
   }
 
-  stopTimerInterval();
-  state.timer.isRunning = false;
-  hasPlayedTimerEndSound = false;
-
   if (preset.players) {
     state.players.min = preset.players.min;
     state.players.max = preset.players.max;
   }
 
-  setTeamCount(preset.teams);
-  state.timer.minutes = preset.timer.minutes;
-  state.timer.seconds = preset.timer.seconds;
-  state.timer.remainingSeconds = preset.timer.minutes * 60 + preset.timer.seconds;
+  if (shouldApplyFullSportPreset(previousSportName)) {
+    stopTimerInterval();
+    state.timer.isRunning = false;
+    hasPlayedTimerEndSound = false;
+    setTeamCount(preset.teams);
+    state.timer.minutes = preset.timer.minutes;
+    state.timer.seconds = preset.timer.seconds;
+    state.timer.remainingSeconds = preset.timer.minutes * 60 + preset.timer.seconds;
+  }
 
   if (!preset.allPlayers) {
     autoPickPlayersForSelectedSport();
