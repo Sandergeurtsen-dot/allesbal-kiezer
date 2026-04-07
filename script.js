@@ -82,6 +82,66 @@ const DEFAULT_SPORTS = DEFAULT_SPORT_IDS.map((sportId) =>
   buildSportFromDefinition(getSportDefinition(sportId))
 );
 
+const SPORT_PRESETS = {
+  voetbal: {
+    players: { min: 8, max: 14 },
+    teams: 2,
+    timer: { minutes: 8, seconds: 0 },
+  },
+  basketbal: {
+    players: { min: 6, max: 10 },
+    teams: 2,
+    timer: { minutes: 6, seconds: 0 },
+  },
+  frisbee: {
+    players: { min: 6, max: 12 },
+    teams: 2,
+    timer: { minutes: 7, seconds: 0 },
+  },
+  hockey: {
+    players: { min: 6, max: 10 },
+    teams: 2,
+    timer: { minutes: 8, seconds: 0 },
+  },
+  handbal: {
+    players: { min: 8, max: 12 },
+    teams: 2,
+    timer: { minutes: 7, seconds: 0 },
+  },
+  trefbal: {
+    teams: 2,
+    timer: { minutes: 6, seconds: 0 },
+    allPlayers: true,
+  },
+  volleybal: {
+    players: { min: 6, max: 12 },
+    teams: 2,
+    timer: { minutes: 6, seconds: 0 },
+  },
+  tennis: {
+    players: { min: 2, max: 4 },
+    teams: 2,
+    timer: { minutes: 5, seconds: 0 },
+  },
+  badminton: {
+    players: { min: 2, max: 4 },
+    teams: 2,
+    timer: { minutes: 5, seconds: 0 },
+  },
+  korfbal: {
+    players: { min: 8, max: 12 },
+    teams: 2,
+    timer: { minutes: 7, seconds: 0 },
+  },
+  rugby: {
+    players: { min: 8, max: 14 },
+    teams: 2,
+    timer: { minutes: 8, seconds: 0 },
+  },
+};
+
+const MAX_ROUND_HISTORY = 6;
+
 const DEFAULT_TEAM_COLORS = [
   "#0e78ff",
   "#ff7a00",
@@ -111,6 +171,10 @@ const defaultState = {
     remainingSeconds: 300,
     isRunning: false,
   },
+  settings: {
+    lockGameMode: false,
+  },
+  roundHistory: [],
 };
 
 const FALLBACK_SPORT = {
@@ -126,6 +190,7 @@ const state = loadState();
 const heroCard = document.querySelector("#heroCard");
 const selectedSportDisplay = document.querySelector("#selectedSportDisplay");
 const enabledSportsCount = document.querySelector("#enabledSportsCount");
+const sportPresetHint = document.querySelector("#sportPresetHint");
 const heroPlayersStat = document.querySelector("#heroPlayersStat");
 const heroTeamsStat = document.querySelector("#heroTeamsStat");
 const heroTimerStat = document.querySelector("#heroTimerStat");
@@ -146,8 +211,11 @@ const randomPlayersButton = document.querySelector("#randomPlayersButton");
 
 const teamCountInput = document.querySelector("#teamCountInput");
 const teamsContainer = document.querySelector("#teamsContainer");
+const undoScoreButton = document.querySelector("#undoScoreButton");
+const newRoundButton = document.querySelector("#newRoundButton");
 const openTeamSettingsButton = document.querySelector("#openTeamSettingsButton");
 const resetScoresButton = document.querySelector("#resetScoresButton");
+const roundHistoryList = document.querySelector("#roundHistoryList");
 
 const timerDisplay = document.querySelector("#timerDisplay");
 const timerMinutesInput = document.querySelector("#timerMinutesInput");
@@ -166,6 +234,7 @@ const gameModeOverlay = document.querySelector("#gameModeOverlay");
 const gameModePanel = document.querySelector("#gameModePanel");
 const gameOverlayBackdrop = document.querySelector("#gameOverlayBackdrop");
 const closeGameModeButton = document.querySelector("#closeGameModeButton");
+const toggleLockGameModeButton = document.querySelector("#toggleLockGameModeButton");
 const overlaySportValue = document.querySelector("#overlaySportValue");
 const overlayPlayersValue = document.querySelector("#overlayPlayersValue");
 const overlayTeamsValue = document.querySelector("#overlayTeamsValue");
@@ -183,6 +252,9 @@ let isGameModeOpen = false;
 let isTeamSettingsOpen = false;
 let audioContext = null;
 let hasPlayedTimerEndSound = false;
+let scoreUndoSnapshot = null;
+let currentRoundHasActivity = false;
+let currentRoundWasRecorded = false;
 
 render();
 attachEvents();
@@ -241,6 +313,10 @@ function loadState() {
         ),
         isRunning: false,
       },
+      settings: {
+        lockGameMode: Boolean(parsedState?.settings?.lockGameMode),
+      },
+      roundHistory: normalizeRoundHistory(parsedState?.roundHistory),
     };
   } catch (error) {
     return cloneData(defaultState);
@@ -267,6 +343,8 @@ function attachEvents() {
 
   attachNumericFieldEvents([teamCountInput], handleTeamCountChange);
   teamsContainer.addEventListener("click", handleTeamScoreAction);
+  undoScoreButton.addEventListener("click", undoLastScoreChange);
+  newRoundButton.addEventListener("click", startNewRound);
   openTeamSettingsButton.addEventListener("click", openTeamSettings);
   teamSettingsBackdrop.addEventListener("click", closeTeamSettings);
   closeTeamSettingsButton.addEventListener("click", closeTeamSettings);
@@ -281,6 +359,7 @@ function attachEvents() {
 
   gameOverlayBackdrop.addEventListener("click", closeGameMode);
   closeGameModeButton.addEventListener("click", closeGameMode);
+  toggleLockGameModeButton.addEventListener("click", toggleLockGameMode);
   overlayStartPauseButton.addEventListener("click", handleOverlayTimerToggle);
   overlayResetButton.addEventListener("click", resetTimer);
   overlayPickSportButton.addEventListener("click", pickRandomSport);
@@ -319,6 +398,7 @@ function render() {
   renderSportSelection();
   renderPlayers();
   renderTeams();
+  renderRoundHistory();
   renderTeamSettings();
   renderTimer();
   renderGameMode();
@@ -328,6 +408,7 @@ function render() {
 function renderHero() {
   const activeSport = getDisplaySport();
   const enabledSports = state.sports.filter((sport) => sport.enabled);
+  const preset = getSportPreset(activeSport.id);
 
   heroCard.style.setProperty("--hero-image", `url("${activeSport.image}")`);
   selectedSportDisplay.textContent = getSelectedSportLabel();
@@ -337,6 +418,9 @@ function renderHero() {
       : enabledSports.length > 0
         ? `${enabledSports.length} sporten actief om uit te kiezen`
         : "Zet minstens 1 sport aan";
+  sportPresetHint.textContent = preset
+    ? `Preset: ${buildPresetSummary(preset)}`
+    : "Preset: eigen instellingen";
   heroPlayersStat.textContent = getPlayersDisplayText();
   heroTeamsStat.textContent = state.teams.length;
   heroTimerStat.textContent = formatTime(state.timer.remainingSeconds);
@@ -455,6 +539,8 @@ function renderPlayers() {
 
 function renderTeams() {
   teamCountInput.value = state.teams.length;
+  undoScoreButton.disabled = !scoreUndoSnapshot;
+  newRoundButton.disabled = !canStartNewRound();
   teamsContainer.innerHTML = "";
 
   state.teams.forEach((team, index) => {
@@ -502,6 +588,34 @@ function renderTeams() {
     `;
 
     teamsContainer.appendChild(teamCard);
+  });
+}
+
+function renderRoundHistory() {
+  roundHistoryList.innerHTML = "";
+
+  if (state.roundHistory.length === 0) {
+    roundHistoryList.innerHTML = `
+      <div class="round-history-empty">
+        <span>Speel een ronde en sla hem op via timer-einde of 'Nieuwe ronde'.</span>
+      </div>
+    `;
+    return;
+  }
+
+  state.roundHistory.forEach((entry) => {
+    const item = document.createElement("article");
+    item.className = "round-history-item";
+    item.innerHTML = `
+      <div class="round-history-item__header">
+        <strong>${escapeHtml(entry.sport)}</strong>
+        <span>${escapeHtml(entry.duration)}</span>
+      </div>
+      <div class="round-history-item__winner">${escapeHtml(entry.winner)}</div>
+      <div class="round-history-item__scores">${escapeHtml(entry.scoreLine)}</div>
+      <div class="round-history-item__time">${escapeHtml(entry.createdAt)}</div>
+    `;
+    roundHistoryList.appendChild(item);
   });
 }
 
@@ -561,6 +675,12 @@ function renderGameMode() {
   overlayTimerDisplay.classList.toggle("is-finished", state.timer.remainingSeconds === 0);
   overlayStartPauseButton.textContent = state.timer.isRunning ? "Pauzeer" : "Start timer";
   overlayStartPauseButton.dataset.timerState = state.timer.isRunning ? "running" : "ready";
+  toggleLockGameModeButton.textContent = state.settings.lockGameMode
+    ? "Ontgrendel"
+    : "Vergrendel";
+  closeGameModeButton.hidden = state.settings.lockGameMode;
+  overlayResetButton.hidden = state.settings.lockGameMode;
+  overlayPickSportButton.hidden = state.settings.lockGameMode;
 
   overlayTeamsContainer.innerHTML = "";
   state.teams.forEach((team, index) => {
@@ -609,6 +729,7 @@ function renderGameMode() {
   });
 
   gameModeOverlay.classList.toggle("is-open", isGameModeOpen);
+  gameModeOverlay.classList.toggle("is-locked", state.settings.lockGameMode);
   document.body.classList.toggle("game-mode-open", isGameModeOpen);
   gameModeOverlay.setAttribute("aria-hidden", String(!isGameModeOpen));
 }
@@ -671,19 +792,17 @@ function addSelectedSport() {
     );
     if (existingSport) {
       existingSport.enabled = true;
-      state.selectedSport = existingSport.name;
       customSportInput.value = "";
       addSportSelect.value = "";
-      render();
+      selectSport(existingSport.name);
       return;
     }
 
     const customDefinition = createCustomSportDefinition(customSportName);
     state.sports.push(buildSportFromDefinition(customDefinition, true));
-    state.selectedSport = customDefinition.name;
     customSportInput.value = "";
     addSportSelect.value = "";
-    render();
+    selectSport(customDefinition.name);
     return;
   }
 
@@ -695,7 +814,7 @@ function addSelectedSport() {
 
   state.sports.push(buildSportFromDefinition(definition, true));
   addSportSelect.value = "";
-  render();
+  selectSport(definition.name);
 }
 
 function handleCustomSportInput(event) {
@@ -853,7 +972,7 @@ function pickRandomSport() {
 
 function selectSport(sportName) {
   state.selectedSport = sportName;
-  autoPickPlayersForSelectedSport();
+  applyPresetForSelectedSport();
   render();
 }
 
@@ -896,7 +1015,11 @@ function autoPickPlayersForSelectedSport() {
 
 function handleTeamCountChange() {
   const requestedCount = normalizeNumber(teamCountInput.value, 1, 8, state.teams.length);
+  setTeamCount(requestedCount);
+  render();
+}
 
+function setTeamCount(requestedCount) {
   if (requestedCount > state.teams.length) {
     for (let index = state.teams.length; index < requestedCount; index += 1) {
       state.teams.push({
@@ -905,11 +1028,10 @@ function handleTeamCountChange() {
         score: 0,
       });
     }
-  } else {
-    state.teams = state.teams.slice(0, requestedCount);
+    return;
   }
 
-  render();
+  state.teams = state.teams.slice(0, requestedCount);
 }
 
 function handleTeamFieldChange(event) {
@@ -961,6 +1083,9 @@ function updateTeamScore(teamIndex, action) {
     return;
   }
 
+  snapshotTeamScores();
+  markRoundActivity();
+
   if (action === "plus") {
     team.score += 1;
   }
@@ -977,9 +1102,13 @@ function updateTeamScore(teamIndex, action) {
 }
 
 function resetScores() {
+  snapshotTeamScores();
   state.teams.forEach((team) => {
     team.score = 0;
   });
+
+  currentRoundHasActivity = false;
+  currentRoundWasRecorded = false;
 
   render();
 }
@@ -1026,6 +1155,7 @@ function toggleTimer(openModeOnStart) {
 
   if (state.timer.isRunning) {
     hasPlayedTimerEndSound = false;
+    markRoundActivity();
     primeAudioContext();
     startTimerInterval();
     if (openModeOnStart) {
@@ -1060,6 +1190,7 @@ function startTimerInterval() {
       state.timer.isRunning = false;
       stopTimerInterval();
       playTimerFinishedSound();
+      archiveCurrentRound("timer-finished");
       render();
       return;
     }
@@ -1082,8 +1213,19 @@ function openGameMode() {
   render();
 }
 
-function closeGameMode() {
+function closeGameMode(forceOrEvent = false) {
+  const force = typeof forceOrEvent === "boolean" ? forceOrEvent : false;
+
+  if (state.settings.lockGameMode && !force) {
+    return;
+  }
+
   isGameModeOpen = false;
+  render();
+}
+
+function toggleLockGameMode() {
+  state.settings.lockGameMode = !state.settings.lockGameMode;
   render();
 }
 
@@ -1103,6 +1245,9 @@ function resetApp() {
   isGameModeOpen = false;
   isTeamSettingsOpen = false;
   hasPlayedTimerEndSound = false;
+  scoreUndoSnapshot = null;
+  currentRoundHasActivity = false;
+  currentRoundWasRecorded = false;
 
   const freshState = cloneData(defaultState);
   state.sports = freshState.sports;
@@ -1110,7 +1255,36 @@ function resetApp() {
   state.players = freshState.players;
   state.teams = freshState.teams;
   state.timer = freshState.timer;
+  state.settings = freshState.settings;
+  state.roundHistory = freshState.roundHistory;
 
+  render();
+}
+
+function undoLastScoreChange() {
+  if (!scoreUndoSnapshot) {
+    return;
+  }
+
+  state.teams = cloneData(scoreUndoSnapshot.teams);
+  scoreUndoSnapshot = null;
+  currentRoundHasActivity = true;
+  currentRoundWasRecorded = false;
+  render();
+}
+
+function startNewRound() {
+  archiveCurrentRound("manual");
+  scoreUndoSnapshot = null;
+  state.teams.forEach((team) => {
+    team.score = 0;
+  });
+  state.timer.isRunning = false;
+  stopTimerInterval();
+  state.timer.remainingSeconds = state.timer.minutes * 60 + state.timer.seconds;
+  hasPlayedTimerEndSound = false;
+  currentRoundHasActivity = false;
+  currentRoundWasRecorded = false;
   render();
 }
 
@@ -1145,6 +1319,48 @@ function getTimerStatusLabel() {
   }
 
   return "Gepauzeerd";
+}
+
+function getSportPreset(sportId) {
+  return SPORT_PRESETS[sportId] || null;
+}
+
+function buildPresetSummary(preset) {
+  const playersLabel = preset.allPlayers
+    ? "alle spelers"
+    : `${preset.players.min}-${preset.players.max} spelers`;
+
+  return `${playersLabel} • ${preset.teams} teams • ${formatTime(
+    preset.timer.minutes * 60 + preset.timer.seconds
+  )}`;
+}
+
+function applyPresetForSelectedSport() {
+  const selectedSport = state.sports.find((sport) => sport.name === state.selectedSport);
+  const preset = selectedSport ? getSportPreset(selectedSport.id) : null;
+
+  if (!preset) {
+    autoPickPlayersForSelectedSport();
+    return;
+  }
+
+  stopTimerInterval();
+  state.timer.isRunning = false;
+  hasPlayedTimerEndSound = false;
+
+  if (preset.players) {
+    state.players.min = preset.players.min;
+    state.players.max = preset.players.max;
+  }
+
+  setTeamCount(preset.teams);
+  state.timer.minutes = preset.timer.minutes;
+  state.timer.seconds = preset.timer.seconds;
+  state.timer.remainingSeconds = preset.timer.minutes * 60 + preset.timer.seconds;
+
+  if (!preset.allPlayers) {
+    autoPickPlayersForSelectedSport();
+  }
 }
 
 function getSportDefinition(sportId) {
@@ -1214,8 +1430,103 @@ function persistState() {
         ...state.timer,
         isRunning: false,
       },
+      settings: state.settings,
+      roundHistory: state.roundHistory,
     })
   );
+}
+
+function normalizeRoundHistory(roundHistory) {
+  if (!Array.isArray(roundHistory)) {
+    return [];
+  }
+
+  return roundHistory
+    .filter((entry) => entry && typeof entry === "object")
+    .slice(0, MAX_ROUND_HISTORY)
+    .map((entry) => ({
+      id: typeof entry.id === "string" ? entry.id : `round-${Date.now()}`,
+      sport: typeof entry.sport === "string" ? entry.sport : "Onbekende sport",
+      duration: typeof entry.duration === "string" ? entry.duration : "00:00",
+      winner: typeof entry.winner === "string" ? entry.winner : "Geen uitslag",
+      scoreLine: typeof entry.scoreLine === "string" ? entry.scoreLine : "",
+      createdAt: typeof entry.createdAt === "string" ? entry.createdAt : "",
+    }));
+}
+
+function snapshotTeamScores() {
+  scoreUndoSnapshot = {
+    teams: cloneData(state.teams),
+  };
+}
+
+function markRoundActivity() {
+  currentRoundHasActivity = true;
+  currentRoundWasRecorded = false;
+}
+
+function canArchiveCurrentRound() {
+  return currentRoundHasActivity && !currentRoundWasRecorded;
+}
+
+function canStartNewRound() {
+  return (
+    currentRoundHasActivity ||
+    state.teams.some((team) => team.score > 0) ||
+    getElapsedRoundSeconds() > 0
+  );
+}
+
+function archiveCurrentRound(reason) {
+  if (!canArchiveCurrentRound()) {
+    return false;
+  }
+
+  const elapsedSeconds = getElapsedRoundSeconds();
+  const hasAnyScore = state.teams.some((team) => team.score > 0);
+
+  if (!hasAnyScore && elapsedSeconds === 0 && reason !== "timer-finished") {
+    return false;
+  }
+
+  const rankedTeams = [...state.teams].sort((left, right) => right.score - left.score);
+  const highestScore = rankedTeams[0]?.score ?? 0;
+  const winningTeams = rankedTeams
+    .filter((team) => team.score === highestScore)
+    .map((team) => team.name.trim() || "Team");
+  const winnerLabel =
+    highestScore === 0
+      ? "Geen score geregistreerd"
+      : winningTeams.length > 1
+        ? `Gelijkspel: ${winningTeams.join(" & ")}`
+        : `Winnaar: ${winningTeams[0]}`;
+
+  const scoreLine = state.teams
+    .map((team) => `${team.name.trim() || "Team"} ${team.score}`)
+    .join(" • ");
+
+  state.roundHistory = [
+    {
+      id: `${Date.now()}-${Math.random().toString(16).slice(2, 7)}`,
+      sport: getSelectedSportLabel(),
+      duration: formatTime(elapsedSeconds),
+      winner: winnerLabel,
+      scoreLine,
+      createdAt: new Date().toLocaleTimeString("nl-NL", {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    },
+    ...state.roundHistory,
+  ].slice(0, MAX_ROUND_HISTORY);
+
+  currentRoundWasRecorded = true;
+  return true;
+}
+
+function getElapsedRoundSeconds() {
+  const configuredSeconds = state.timer.minutes * 60 + state.timer.seconds;
+  return Math.max(0, configuredSeconds - state.timer.remainingSeconds);
 }
 
 function escapeHtml(text) {
